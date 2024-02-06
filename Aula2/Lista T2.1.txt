@@ -1,0 +1,463 @@
+1-
+
+CREATE TABLE cliente ( 
+
+pk_cliente serial PRIMARY KEY, 
+
+nome varchar(80), 
+
+cpf char(11) unique 
+
+)
+
+CREATE TABLE cliente_endereco( 
+
+pk_endereco serial PRIMARY KEY, 
+
+fk_cliente int, 
+
+logradouro varchar(60) not null, 
+
+bairro varchar(60) not null, 
+
+cidade varchar(60) not null, 
+
+estado char(2) DEFAULT 'GO', 
+
+pais varchar(40) DEFAULT 'Brasil', 
+
+cep char(8), 
+
+ 
+
+FOREIGN KEY (fk_cliente) REFERENCES cliente(pk_cliente) ON DELETE CASCADE /*RESTRICT OU SET NULL*/ ON UPDATE CASCADE, 
+
+UNIQUE (fk_cliente, logradouro, bairro, cidade, estado, pais, cep) 
+
+) 
+
+ 
+
+CREATE TABLE cargo ( 
+
+pk_cargo serial PRIMARY KEY, 
+
+nome varchar(50) UNIQUE, 
+
+descricao varchar(200) 
+
+) 
+
+  
+
+CREATE TABLE funcionario( 
+
+pk_funcionario serial PRIMARY KEY, 
+
+fk_cargo int, 
+
+nome varchar(80), 
+
+cpf char(11) UNIQUE, 
+
+FOREIGN KEY (fk_cargo) REFERENCES cargo(pk_cargo) ON DELETE RESTRICT ON UPDATE CASCADE 
+
+) 
+
+  
+
+CREATE TABLE funcionario_endereco( 
+
+pk_endereco serial PRIMARY KEY, 
+
+fk_funcionario int, 
+
+logradouro varchar(60) not null, 
+
+bairro varchar(60) not null, 
+
+cidade varchar(60) not null, 
+
+estado char(2) DEFAULT 'GO', 
+
+pais varchar(40) DEFAULT 'Brasil', 
+
+cep char(8), 
+
+ 
+
+FOREIGN KEY (fk_funcionario) REFERENCES funcionario(pk_funcionario) ON DELETE /*CASCADE*/ RESTRICT /* SET NULL*/ ON UPDATE CASCADE, 
+
+UNIQUE (fk_funcionario, logradouro, bairro, cidade, estado, pais, cep) 
+
+) 
+
+  
+
+CREATE TABLE produto( 
+
+pk_produto serial PRIMARY KEY, 
+
+nome varchar(60), 
+
+estoque_minimo  decimal (8,2) DEFAULT 100 , /*99.999,99 8 digitos sendo 2 destinados ao depois da vírgula*/ 
+
+qtd_estoque decimal (8,2) DEFAULT 0 
+
+  
+
+) 
+
+  
+
+CREATE SEQUENCE numero_venda_seq 
+
+  
+
+CREATE TABLE venda( 
+
+pk_venda bigserial PRIMARY KEY, 
+
+fk_cliente int, 
+
+fk_vendedor int, 
+
+numero bigint DEFAULT nextval('numero_venda_seq') UNIQUE , 
+
+data timestamp DEFAULT now(), 
+
+check (numero>0), 
+
+check (data >= now()), 
+
+ 
+
+FOREIGN KEY (fk_cliente) REFERENCES cliente(pk_cliente) ON DELETE CASCADE ON UPDATE CASCADE, 
+
+FOREIGN KEY (fk_vendedor) REFERENCES funcionario(pk_funcionario) ON DELETE CASCADE ON UPDATE CASCADE 
+
+) 
+
+
+
+CREATE TABLE venda_item(  
+
+  
+
+pk_item bigserial PRIMARY KEY,  
+
+fk_venda bigint not null,  
+
+fk_produto int not null,  
+
+qtd decimal(8,2) not null,  
+
+valor_unitario decimal (10,2) not null,  
+
+UNIQUE(fk_venda, fk_produto),  
+
+check (qtd>0),  
+
+check (valor_unitario>0),  
+
+  
+
+FOREIGN KEY (fk_venda) REFERENCES venda(pk_venda) ON DELETE CASCADE ON UPDATE CASCADE,  
+
+FOREIGN KEY (fk_produto) REFERENCES produto(pk_produto) ON DELETE RESTRICT ON UPDATE CASCADE   
+
+)  
+
+
+
+CREATE TABLE fornecedor( 
+
+pk_fornecedor serial PRIMARY KEY, 
+
+nome varchar(80), 
+
+cpf char(11) UNIQUE 
+
+) 
+
+  
+
+CREATE TABLE fornecedor_endereco( 
+
+pk_endereco serial PRIMARY KEY, 
+
+fk_fornecedor int, 
+
+logradouro varchar(60) not null,  
+
+bairro varchar(60) not null,  
+
+cidade varchar(60) not null,  
+
+estado char(2) DEFAULT 'GO',  
+
+pais varchar(40) DEFAULT 'Brasil',  
+
+cep char(8), 
+
+ 
+
+FOREIGN KEY (fk_fornecedor) REFERENCES fornecedor(pk_fornecedor) ON DELETE CASCADE /*RESTRICT OU SET NULL*/ ON UPDATE CASCADE,  
+
+UNIQUE (fk_fornecedor, logradouro, bairro, cidade, estado, pais, cep)  
+
+) 
+
+ 
+
+CREATE TABLE compra( 
+
+pk_compra bigserial PRIMARY KEY, 
+
+fk_fornecedor int, 
+
+numero bigint DEFAULT nextval('numero_venda_seq') UNIQUE ,  
+
+data timestamp DEFAULT now(),  
+
+check (numero>0),  
+
+check (data >= now()),  
+
+  
+
+FOREIGN KEY (fk_fornecedor) REFERENCES fornecedor(pk_fornecedor) ON DELETE CASCADE ON UPDATE CASCADE 
+
+) 
+
+  
+
+CREATE TABLE compra_item(  
+
+  
+
+pk_item bigserial PRIMARY KEY,  
+
+fk_compra bigint not null,  
+
+fk_produto int not null,  
+
+qtd decimal(8,2) not null,  
+
+valor_unitario decimal (10,2) not null,  
+
+UNIQUE(fk_compra, fk_produto),  
+
+check (qtd>0),  
+
+check (valor_unitario>0),  
+
+  
+
+FOREIGN KEY (fk_compra) REFERENCES compra(pk_compra) ON DELETE CASCADE ON UPDATE CASCADE,  
+
+FOREIGN KEY (fk_produto) REFERENCES produto(pk_produto) ON DELETE RESTRICT ON UPDATE CASCADE  
+
+  
+
+) 
+
+  
+
+CREATE TABLE financeiro_entrada( 
+
+pk_financeiro serial PRIMARY KEY, 
+
+fk_venda int, 
+
+data_emissao timestamp default now(), 
+
+data_vencimento timestamp, 
+
+data_baixa timestamp, 
+
+valor decimal(10,2), 
+
+forma_recebimento varchar(40), 
+
+check (data_emissao >= now()), 
+
+check(data_vencimento > data_emissao), 
+
+check(data_baixa > data_vencimento ), 
+
+check(valor > 0), 
+
+ 
+
+FOREIGN KEY (fk_venda) REFERENCES venda(pk_venda) ON DELETE RESTRICT ON UPDATE CASCADE 
+
+) 
+
+  
+
+CREATE TABLE funanceiro_saida( 
+
+pk_financeiro serial PRIMARY KEY, 
+
+fk_compra int, 
+
+data_emissao timestamp default now(), 
+
+data_vencimento timestamp, 
+
+data_baixa timestamp, 
+
+valor decimal(10,2), 
+
+forma_recebimento varchar(40), 
+
+check (data_emissao >= now()), 
+
+check(data_vencimento > data_emissao), 
+
+check(data_baixa > data_vencimento), 
+
+check(valor > 0), 
+
+ 
+
+FOREIGN KEY (fk_compra) REFERENCES compra(pk_compra) ON DELETE RESTRICT ON UPDATE CASCADE 
+
+)  
+
+2-
+
+a.
+
+-- Inserir cliente 1
+
+INSERT INTO cliente (pk_cliente, nome, cpf)
+
+VALUES (1, 'João Silva', '11111111111');
+
+
+
+-- Inserir endereço do cliente 1
+
+INSERT INTO cliente_endereco (pk_endereco, fk_cliente, logradouro, bairro, cidade, estado, pais, cep)
+
+VALUES (1, 1, 'Rua A', 'Bairro X', 'Cidade Y', 'GO', 'Brasil', '11111111');
+
+
+
+-- Inserir cliente 2
+
+INSERT INTO cliente (pk_cliente, nome, cpf)
+
+VALUES (2, 'Maria Santos', '22222222222');
+
+
+
+-- Inserir endereço do cliente 2
+
+INSERT INTO cliente_endereco (pk_endereco, fk_cliente, logradouro, bairro, cidade, estado, pais, cep)
+
+VALUES (2, 2, 'Rua B', 'Bairro Y', 'Cidade X', 'GO', 'Brasil', '22222222');
+
+
+
+-- Inserir cliente 3
+
+INSERT INTO cliente (pk_cliente, nome, cpf)
+
+VALUES (3, 'Pedro Oliveira', '33333333333');
+
+
+
+-- Inserir endereço do cliente 3
+
+INSERT INTO cliente_endereco (pk_endereco, fk_cliente, logradouro, bairro, cidade, estado, pais, cep)
+
+VALUES (3, 3, 'Rua C', 'Bairro Z', 'Cidade W', 'GO', 'Brasil', '33333333');
+
+
+
+-- Inserir cliente 4
+
+INSERT INTO cliente (pk_cliente, nome, cpf)
+
+VALUES (4, 'Ana Costa', '44444444444');
+
+
+
+-- Inserir endereço do cliente 4
+
+INSERT INTO cliente_endereco (pk_endereco, fk_cliente, logradouro, bairro, cidade, estado, pais, cep)
+
+VALUES (4, 4, 'Rua D', 'Bairro X', 'Cidade Y', 'GO', 'Brasil', '44444444');
+
+
+
+-- Inserir cliente 5
+
+INSERT INTO cliente (pk_cliente, nome, cpf)
+
+VALUES (5, 'Paulo Gomes', '55555555555');
+
+
+
+-- Inserir endereço do cliente 5
+
+INSERT INTO cliente_endereco (pk_endereco, fk_cliente, logradouro, bairro, cidade, estado, pais, cep)
+
+VALUES (5, 5, 'Rua E', 'Bairro W', 'Cidade Z', 'GO', 'Brasil', '55555555');
+
+b.
+
+INSERT INTO cargo (pk_cargo, nome, descricao)
+
+VALUES (1, 'Vendedor', 'Responsável por realizar vendas');
+
+INSERT INTO cargo (pk_cargo, nome, descricao)
+
+VALUES (2, 'Secretária', 'Responsável por atender telefonemas e agendar reuniões');
+
+INSERT INTO cargo (pk_cargo, nome, descricao)
+
+VALUES (3, 'Gerente', 'Responsável por gerenciar a equipe e as operações da empresa');
+
+c.
+
+INSERT INTO funcionario (nome, fk_cargo) VALUES
+
+  ('Secretária 1', 2),
+
+  ('Secretária 2', 2),
+
+  ('Gerente', 3),
+
+  ('Vendedor 1', 1),
+
+  ('Vendedor 2', 1),
+
+  ('Vendedor 3', 1);
+
+d.
+
+INSERT INTO fornecedores (nome) VALUES
+
+  ('Fornecedor 1'),
+
+  ('Fornecedor 2'),
+
+  ('Fornecedor 3');
+
+e.
+
+INSERT INTO produto (nome) VALUES
+
+  ('Produto 1'),
+
+  ('Produto 2'),
+
+  ('Produto 3'),
+
+  ('Produto 4'),
+
+  ('Produto 5');
